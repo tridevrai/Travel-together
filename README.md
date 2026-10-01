@@ -3,10 +3,11 @@
 A web app that lets a group travelling together see each other's live location.
 People join with a short code or a `/j/:code` link; no install needed.
 
-Status: v1 steps 1–4 — the Supabase schema, RLS policies and RPCs; the web app
+Status: v1 steps 1–5 — the Supabase schema, RLS policies and RPCs; the web app
 with anonymous sign-in, create/join screens and the `/j/:code` route; live
-location sharing on a map; and distance and direction to each member. Next:
-compass-relative arrows (device orientation).
+location sharing on a map; distance and direction to each member; and
+compass-relative arrows. Next: wake lock, group expiry polish and the PWA
+manifest.
 
 ## Web app
 
@@ -42,8 +43,16 @@ Location sharing (on the group page):
 - Members list: closest first, with distance (haversine), an arrow along the
   initial great-circle bearing and the compass point, and "Seen x ago". When
   the distance is within both phones' GPS accuracy it says "Nearby" instead of
-  showing a meaningless arrow. Tapping someone centres the map on them. Arrows
-  are north-up until the compass step (`src/core/directions.ts`).
+  showing a meaningless arrow. Tapping someone centres the map on them
+  (`src/core/directions.ts`).
+- Compass: arrows turn with the phone (rotation = bearing − heading). Android
+  Chrome uses `deviceorientationabsolute` (heading = 360 − alpha); iOS Safari
+  uses `webkitCompassHeading` after a "Use compass" tap
+  (`DeviceOrientationEvent.requestPermission()` must come from a tap). The
+  screen rotation is added, readings are smoothed on unit vectors so turning
+  through north doesn't swing the arrow, and an uncalibrated iOS compass is
+  ignored. With no compass (or refused), arrows stay north-up and the page says
+  so. The UI calls the compass approximate (`src/core/compass.ts`).
 - Sharing stops when the phone locks or the browser is in the background; the
   page says so. `src/core/` holds the framework-free group API and code helpers so
 the future React Native app can reuse them.

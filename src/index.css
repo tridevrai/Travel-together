@@ -240,4 +240,17 @@ button.secondary {
   box-shadow: 0 0 0 4px color-mix(in srgb, #2ea043 25%, transparent);
 }
 .member-list li.is-stale .direction { opacity: 0.5; }
-.hint { margin: 8px 0 0; }
+
+
+.hint p { margin: 8px 0 0; }
+.compass-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.small-button { margin: 0; padding: 6px 12px; font-size: 0.85rem; flex: none; }
+.compass-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  margin-right: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}

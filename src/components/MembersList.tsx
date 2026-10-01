@@ -3,6 +3,7 @@ import { directionSortKey, directionTo, type Direction, type Position } from '..
 import { cardinal, cardinalName, formatDistance } from '../core/geo'
 import { isStale, type LocationMap } from '../core/locations'
 import { initials, memberColor, timeAgo } from '../lib/format'
+import type { CompassStatus } from '../lib/useCompass'
 import { DirectionArrow } from './DirectionArrow'
 
 type Props = {
@@ -11,8 +12,8 @@ type Props = {
   userId: string
   /** My live position, or null when I'm not sharing. */
   myPosition: Position | null
-  /** Device compass heading, or null (arrows are then north-up). */
-  heading: number | null
+  compass: CompassStatus
+  onEnableCompass: () => void
   now: number
   onSelect: (userId: string) => void
 }
@@ -20,7 +21,8 @@ type Props = {
 type Row = { member: GroupMember; direction: Direction; seenAt: string | null; stale: boolean }
 
 /** Everyone else, closest first: distance, a direction arrow and when they were last seen. */
-export function MembersList({ members, locations, userId, myPosition, heading, now, onSelect }: Props) {
+export function MembersList({ members, locations, userId, myPosition, compass, onEnableCompass, now, onSelect }: Props) {
+  const heading = compass.kind === 'active' ? compass.heading : null
   const me = members.find((m) => m.user_id === userId)
   const rows: Row[] = members
     .filter((m) => m.user_id !== userId)
@@ -65,12 +67,10 @@ export function MembersList({ members, locations, userId, myPosition, heading, n
         ))}
       </ul>
       {myPosition && someoneVisible && (
-        <p className="muted small hint">
-          {heading === null
-            ? 'Arrows point relative to north (the top of the map).'
-            : 'Arrows point relative to where your phone is facing.'}{' '}
-          Tap someone to find them on the map.
-        </p>
+        <div className="hint">
+          <CompassHint compass={compass} onEnable={onEnableCompass} />
+          <p className="muted small">Tap someone to find them on the map.</p>
+        </div>
       )}
     </section>
   )
@@ -121,6 +121,33 @@ function DirectionCell({ direction, heading, stale }: { direction: Direction; he
       <span className="distance">{prefix}{formatDistance(direction.distanceM)}</span>
     </span>
   )
+}
+
+function CompassHint({ compass, onEnable }: { compass: CompassStatus; onEnable: () => void }) {
+  switch (compass.kind) {
+    case 'active':
+      return (
+        <p className="muted small">
+          <span className="compass-badge">Facing {cardinal(compass.heading)}</span> Arrows turn with your phone. Hold
+          it flat; the compass is approximate and can be thrown off by metal or magnets nearby.
+        </p>
+      )
+    case 'needs-permission':
+      return (
+        <p className="muted small compass-row">
+          <span>Arrows point relative to north (the top of the map).</span>
+          <button type="button" className="secondary small-button" onClick={onEnable}>
+            Use compass
+          </button>
+        </p>
+      )
+    case 'denied':
+      return <p className="muted small">Compass access was refused, so arrows point relative to north (the top of the map).</p>
+    case 'starting':
+      return <p className="muted small">Arrows point relative to north. Starting compass…</p>
+    default:
+      return <p className="muted small">Arrows point relative to north (the top of the map).</p>
+  }
 }
 
 function Avatar({ member }: { member: GroupMember }) {

@@ -10,6 +10,7 @@ import { SharingPanel } from '../components/SharingPanel'
 import { errorMessage } from '../lib/errors'
 import { supabase } from '../lib/supabase'
 import { useAsync } from '../lib/useAsync'
+import { useCompass } from '../lib/useCompass'
 import { useGroupLocations } from '../lib/useGroupLocations'
 import { useLocationSharing } from '../lib/useLocationSharing'
 import { useMembers } from '../lib/useMembers'
@@ -78,6 +79,9 @@ function GroupView({ group }: { group: GroupRow }) {
       ? { lat: sharing.status.fix.lat, lng: sharing.status.fix.lng, accuracyM: sharing.status.fix.accuracyM }
       : null
 
+  // Only needed while there are arrows to turn.
+  const compass = useCompass(myPosition !== null && locations.size > 0)
+
   const points = useMemo(
     () => toMapPoints(members, locations, user.id, sharing.status, now),
     [members, locations, user.id, sharing.status, now],
@@ -121,7 +125,8 @@ function GroupView({ group }: { group: GroupRow }) {
           locations={locations}
           userId={user.id}
           myPosition={myPosition}
-          heading={null}
+          compass={compass.status}
+          onEnableCompass={() => void compass.requestPermission()}
           now={now}
           onSelect={(userId) => setFocus((f) => ({ userId, seq: (f?.seq ?? 0) + 1 }))}
         />
