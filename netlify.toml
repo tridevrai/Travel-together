@@ -1,0 +1,14 @@
+# Netlify build settings. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in
+# Site configuration › Environment variables (Vite bakes them in at build time).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Single-page app: deep links like /j/ABC234 load index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

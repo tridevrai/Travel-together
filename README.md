@@ -75,9 +75,8 @@ is a new anonymous user there and must open the group link again.
 the future React Native app can reuse them.
 
 Checks: `npm run lint`, `npm test` (Vitest), `npm run build`.
-Deploying: any static host works as long as every path falls back to
-`index.html` (`vercel.json` and `public/_redirects` handle Vercel and Netlify).
-HTTPS is required for geolocation.
+Deploying: see [Deploying](#deploying) below. Any static host works as long as
+every path falls back to `index.html`; HTTPS is required for geolocation.
 
 ## Database (`supabase/`)
 
@@ -138,3 +137,40 @@ supabase test db
 Without Docker, `scripts/db-test/run.sh` runs the same tests against a
 throwaway local Postgres plus a small stand-in for Supabase's `auth` schema and
 roles (needs Postgres server binaries, pgTAP and `pg_prove`).
+
+## Deploying
+
+### 1. Supabase project
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Authentication › Sign In / Providers: turn on **Anonymous sign-ins**.
+   Also review Authentication › Rate Limits, and consider enabling CAPTCHA.
+3. Data API: must be enabled with the `public` schema exposed (the default).
+4. Apply the migrations:
+   ```sh
+   npx supabase login
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase db push
+   ```
+   (Or paste the files in `supabase/migrations/` into the SQL editor, oldest first.)
+5. Project Settings › API: copy the **Project URL** and the **anon / publishable key**.
+
+### 2a. Vercel
+
+1. [vercel.com/new](https://vercel.com/new) › import this GitHub repo. Vite is
+   detected automatically; `vercel.json` handles deep links.
+2. Add environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+   (optionally `VITE_MAP_STYLE_URL`) before the first deploy.
+3. Deploy. The production branch is the repo's default branch.
+
+### 2b. Netlify
+
+1. [app.netlify.com/start](https://app.netlify.com/start) › import this repo.
+   `netlify.toml` sets the build command, output folder, Node version and
+   deep-link redirect.
+2. Site configuration › Environment variables: add the same two variables.
+3. Deploy.
+
+Vite bakes the variables into the build, so redeploy after changing them.
+Then smoke-test on a phone: create a group, open the invite link on a second
+phone, and check both appear on the map.
