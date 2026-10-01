@@ -3,13 +3,15 @@
 A web app that lets a group travelling together see each other's live location.
 People join with a short code or a `/j/:code` link; no install needed.
 
-Status: v1 steps 1–2 — the Supabase schema, RLS policies and RPCs, plus the
-web app with anonymous sign-in, create/join screens and the `/j/:code` route.
-The live map comes next.
+Status: v1 steps 1–3 — the Supabase schema, RLS policies and RPCs; the web app
+with anonymous sign-in, create/join screens and the `/j/:code` route; and live
+location sharing on a map. Next: distance and direction to each member.
 
 ## Web app
 
-Vite + React + TypeScript, `@supabase/supabase-js`, React Router.
+Vite + React + TypeScript, `@supabase/supabase-js`, React Router, MapLibre GL
+with [OpenFreeMap](https://openfreemap.org) tiles (no API key; set
+`VITE_MAP_STYLE_URL` to use another provider).
 
 ```sh
 npm install
@@ -21,10 +23,23 @@ npm run dev
 | --- | --- |
 | `/` | Join with a code, start a group, list your groups |
 | `/j/:code` | Join page a shared link opens (code is normalized, e.g. `/j/abc-234` → `/j/ABC234`) |
-| `/g/:groupId` | Group: invite code and share button, members (live via Realtime); map placeholder |
+| `/g/:groupId` | Group: sharing status and pause/resume, live map, members with "last seen", invite code |
 
 Visitors are signed in anonymously on first load; the session persists in the
-browser. `src/core/` holds the framework-free group API and code helpers so
+browser.
+
+Location sharing (on the group page):
+
+- Asks for location permission from a "Start sharing" tap; starts by itself on
+  later visits once permission is granted. A blocked permission gets a help card.
+- Uploads the latest position when the device has moved more than 15 m or 30 s
+  have passed, never more often than every 5 s (`src/core/uploadThrottle.ts`).
+- Other members' markers update via Realtime; the list reloads on reconnect and
+  when the tab comes back to the foreground. Positions older than 2 minutes are
+  dimmed and labelled with how long ago they were seen.
+- Pause/resume sets `is_sharing`; pausing deletes the stored position.
+- Sharing stops when the phone locks or the browser is in the background; the
+  page says so. `src/core/` holds the framework-free group API and code helpers so
 the future React Native app can reuse them.
 
 Checks: `npm run lint`, `npm test` (Vitest), `npm run build`.

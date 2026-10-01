@@ -126,3 +126,90 @@ button:disabled { opacity: 0.6; cursor: default; }
 
 .card > .code-display { margin-bottom: 12px; }
 form + .small { margin: 12px 0 0; }
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+.sharing p { margin-bottom: 4px; }
+.live-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2ea043;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #2ea043 25%, transparent);
+}
+
+.map-wrap {
+  position: relative;
+  height: 55vh;
+  min-height: 300px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+/* Sized explicitly: maplibre-gl.css sets position: relative on the container. */
+.map { width: 100%; height: 100%; }
+.map-loading { display: grid; place-items: center; }
+.map-fit {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+}
+
+.member-marker {
+  display: flex;
+  width: max-content; /* else it stretches to the map width and the centring is off */
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: default;
+  transform-origin: top center;
+}
+.member-marker-dot {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--member-color);
+  color: #fff;
+  font: 700 12px/1 system-ui, sans-serif;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+}
+.member-marker.is-me .member-marker-dot {
+  background: #1f6feb;
+  box-shadow: 0 0 0 6px rgb(31 111 235 / 0.25), 0 1px 4px rgb(0 0 0 / 0.35);
+}
+.member-marker-label {
+  font: 600 11px/1.2 system-ui, sans-serif;
+  color: #16181d;
+  background: rgb(255 255 255 / 0.9);
+  padding: 1px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.member-marker.is-stale { opacity: 0.45; filter: grayscale(0.8); }
+
+.member-name { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex: none;
+}
+.member-list li.is-stale .avatar { opacity: 0.45; }

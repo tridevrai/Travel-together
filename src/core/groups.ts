@@ -116,3 +116,12 @@ export async function listMembers(client: Client, groupId: string): Promise<Grou
 export function isExpired(group: Pick<Group, 'expires_at'>, now = new Date()): boolean {
   return group.expires_at !== null && new Date(group.expires_at) <= now
 }
+
+/** Pauses or resumes my sharing. Pausing also deletes my stored position (DB trigger). */
+export async function setSharing(client: Client, groupId: string, userId: string, isSharing: boolean): Promise<void> {
+  const { error } = await client
+    .from('group_members')
+    .update({ is_sharing: isSharing })
+    .match({ group_id: groupId, user_id: userId })
+  if (error) throw toGroupError(error)
+}
