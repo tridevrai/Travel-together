@@ -1,0 +1,23 @@
+name: Database tests
+
+on:
+  push:
+    paths:
+      - "supabase/**"
+      - ".github/workflows/db-tests.yml"
+  pull_request:
+    paths:
+      - "supabase/**"
+      - ".github/workflows/db-tests.yml"
+
+jobs:
+  pgtap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      # Starts the Supabase Postgres image and applies supabase/migrations.
+      - run: supabase db start
+      - run: supabase test db
