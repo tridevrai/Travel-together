@@ -3,11 +3,10 @@
 A web app that lets a group travelling together see each other's live location.
 People join with a short code or a `/j/:code` link; no install needed.
 
-Status: v1 steps 1–5 — the Supabase schema, RLS policies and RPCs; the web app
-with anonymous sign-in, create/join screens and the `/j/:code` route; live
-location sharing on a map; distance and direction to each member; and
-compass-relative arrows. Next: wake lock, group expiry polish and the PWA
-manifest.
+Status: v1 complete (build steps 1–6) — the Supabase schema, RLS policies and
+RPCs; anonymous sign-in, create/join screens and the `/j/:code` route; live
+location sharing on a map; distance and direction to each member;
+compass-relative arrows; screen wake lock, trip expiry and an installable PWA.
 
 ## Web app
 
@@ -53,6 +52,24 @@ Location sharing (on the group page):
   through north doesn't swing the arrow, and an uncalibrated iOS compass is
   ignored. With no compass (or refused), arrows stay north-up and the page says
   so. The UI calls the compass approximate (`src/core/compass.ts`).
+- Screen Wake Lock keeps the screen on while sharing, re-acquired whenever the
+  page becomes visible again; without the API the page asks the user to keep
+  the screen on.
+- Trip end: the header counts down ("Sharing ends in 3 days"), highlights the
+  last hour, and when the time passes the page switches to "This trip ended"
+  by itself, stopping uploads and hiding the map and invite. The server
+  enforces the same cut-off.
+
+### Add to home screen (PWA)
+
+`public/manifest.webmanifest` plus icons (`public/icons/`, including maskable
+and Apple touch icons) make the app installable: Chrome offers "Install app",
+iOS Safari "Add to Home Screen". There is no service worker; offline support
+is out of scope for v1.
+
+Known iOS limitation: a home-screen web app gets its own storage, separate from
+Safari. Someone who joined a group in Safari and then opens the home-screen app
+is a new anonymous user there and must open the group link again.
 - Sharing stops when the phone locks or the browser is in the background; the
   page says so. `src/core/` holds the framework-free group API and code helpers so
 the future React Native app can reuse them.

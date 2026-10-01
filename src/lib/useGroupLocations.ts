@@ -3,6 +3,7 @@ import { applyLocationChange, listLocations, subscribeToLocations, type Location
 import { supabase } from './supabase'
 
 const EMPTY: LocationMap = new Map()
+const RETRY_MS = 3_000
 
 /** Everyone's latest position in the group, kept live via Realtime. */
 export function useGroupLocations(groupId: string, enabled: boolean): LocationMap {
@@ -14,10 +15,20 @@ export function useGroupLocations(groupId: string, enabled: boolean): LocationMa
     let cancelled = false
     const setLocations = (update: (current: LocationMap) => LocationMap) =>
       setState((s) => ({ groupId, locations: update(s.groupId === groupId ? s.locations : EMPTY) }))
-    const reload = () =>
+    let retry: ReturnType<typeof setTimeout> | undefined
+    const reload = (): Promise<void> =>
       listLocations(supabase, groupId).then(
-        (fresh) => !cancelled && setLocations(() => fresh),
-        (err: unknown) => console.error('Loading locations failed', err),
+        (fresh) => {
+          if (!cancelled) setLocations(() => fresh)
+        },
+        (err: unknown) => {
+          if (cancelled) return
+          // supabase-js already retries reads a few times (~7 s); after a longer
+          // outage, keep trying rather than wait for the next reconnect.
+          console.warn('Loading locations failed; retrying', err)
+          clearTimeout(retry)
+          retry = setTimeout(() => void reload(), RETRY_MS)
+        },
       )
 
     // Reload on every (re)connect to catch up on changes missed while
@@ -33,6 +44,7 @@ export function useGroupLocations(groupId: string, enabled: boolean): LocationMa
 
     return () => {
       cancelled = true
+      clearTimeout(retry)
       subscription.unsubscribe()
       document.removeEventListener('visibilitychange', onVisible)
     }

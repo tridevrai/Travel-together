@@ -11,6 +11,8 @@ import { errorMessage } from '../lib/errors'
 import { supabase } from '../lib/supabase'
 import { useAsync } from '../lib/useAsync'
 import { useCompass } from '../lib/useCompass'
+import { timeAgo, timeUntil } from '../lib/format'
+import { useWakeLock } from '../lib/useWakeLock'
 import { useGroupLocations } from '../lib/useGroupLocations'
 import { useLocationSharing } from '../lib/useLocationSharing'
 import { useMembers } from '../lib/useMembers'
@@ -79,6 +81,7 @@ function GroupView({ group }: { group: GroupRow }) {
       ? { lat: sharing.status.fix.lat, lng: sharing.status.fix.lng, accuracyM: sharing.status.fix.accuracyM }
       : null
 
+  const wakeLock = useWakeLock(sharing.status.kind === 'sharing')
   // Only needed while there are arrows to turn.
   const compass = useCompass(myPosition !== null && locations.size > 0)
 
@@ -92,17 +95,12 @@ function GroupView({ group }: { group: GroupRow }) {
       <header className="group-header">
         <Link className="back-link" to="/">All groups</Link>
         <h1>{group.name}</h1>
-        {expired ? (
-          <p className="notice">This trip has ended. Locations are no longer shared.</p>
-        ) : (
-          group.expires_at && (
-            <p className="muted small">Sharing ends {new Date(group.expires_at).toLocaleString()}</p>
-          )
-        )}
+        <ExpiryNotice expiresAt={group.expires_at} now={now} />
       </header>
       {!expired && me && (
         <SharingPanel
           status={sharing.status}
+          wakeLock={wakeLock}
           paused={paused}
           now={now}
           onStart={sharing.start}
@@ -126,6 +124,7 @@ function GroupView({ group }: { group: GroupRow }) {
           userId={user.id}
           myPosition={myPosition}
           compass={compass.status}
+          ended={expired}
           onEnableCompass={() => void compass.requestPermission()}
           now={now}
           onSelect={(userId) => setFocus((f) => ({ userId, seq: (f?.seq ?? 0) + 1 }))}
@@ -133,6 +132,35 @@ function GroupView({ group }: { group: GroupRow }) {
       )}
       {!expired && <InviteCard code={group.code} />}
     </main>
+  )
+}
+
+const ENDING_SOON_MS = 60 * 60 * 1000
+
+/** When sharing ends; switches to "ended" by itself when the time passes. */
+function ExpiryNotice({ expiresAt, now }: { expiresAt: string | null; now: number }) {
+  if (!expiresAt) return null
+  const end = new Date(expiresAt)
+  const left = end.getTime() - now
+  if (left <= 0) {
+    return (
+      <p className="notice" role="status">
+        This trip ended {timeAgo(expiresAt, now)}. Locations are no longer shared.
+      </p>
+    )
+  }
+  const when = end.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+  if (left < ENDING_SOON_MS) {
+    return (
+      <p className="notice" role="status">
+        Sharing ends {timeUntil(expiresAt, now)} ({when}).
+      </p>
+    )
+  }
+  return (
+    <p className="muted small">
+      Sharing ends {timeUntil(expiresAt, now)} · {when}
+    </p>
   )
 }
 

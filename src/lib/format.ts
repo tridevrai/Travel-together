@@ -21,3 +21,12 @@ export function memberColor(userId: string): string {
   for (const ch of userId) hash = (hash * 31 + ch.charCodeAt(0)) | 0
   return `hsl(${Math.abs(hash) % 360} 65% 45%)`
 }
+
+/** "in 25 min", "in 3 h", "in 2 days". */
+export function timeUntil(timestamp: string | number, now: number): string {
+  const minutes = Math.max(0, Math.ceil((new Date(timestamp).getTime() - now) / 60_000))
+  if (minutes < 60) return `in ${Math.max(1, minutes)} min`
+  const hours = Math.round(minutes / 60)
+  if (hours < 48) return `in ${hours} h`
+  return `in ${Math.round(hours / 24)} days`
+}

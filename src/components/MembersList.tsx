@@ -14,6 +14,8 @@ type Props = {
   myPosition: Position | null
   compass: CompassStatus
   onEnableCompass: () => void
+  /** The trip is over: just list who was in it. */
+  ended: boolean
   now: number
   onSelect: (userId: string) => void
 }
@@ -21,7 +23,7 @@ type Props = {
 type Row = { member: GroupMember; direction: Direction; seenAt: string | null; stale: boolean }
 
 /** Everyone else, closest first: distance, a direction arrow and when they were last seen. */
-export function MembersList({ members, locations, userId, myPosition, compass, onEnableCompass, now, onSelect }: Props) {
+export function MembersList({ members, locations, userId, myPosition, compass, onEnableCompass, ended, now, onSelect }: Props) {
   const heading = compass.kind === 'active' ? compass.heading : null
   const me = members.find((m) => m.user_id === userId)
   const rows: Row[] = members
@@ -59,11 +61,13 @@ export function MembersList({ members, locations, userId, myPosition, compass, o
                 {me.display_name} <span className="muted">(you)</span>
               </span>
             </span>
-            <span className="muted small">{me.is_sharing ? (myPosition ? 'Sharing' : 'Not sharing yet') : 'Paused'}</span>
+            {!ended && (
+              <span className="muted small">{me.is_sharing ? (myPosition ? 'Sharing' : 'Not sharing yet') : 'Paused'}</span>
+            )}
           </li>
         )}
         {rows.map((row) => (
-          <MemberRow key={row.member.user_id} row={row} heading={heading} now={now} onSelect={onSelect} />
+          <MemberRow key={row.member.user_id} row={row} heading={heading} ended={ended} now={now} onSelect={onSelect} />
         ))}
       </ul>
       {myPosition && someoneVisible && (
@@ -76,19 +80,28 @@ export function MembersList({ members, locations, userId, myPosition, compass, o
   )
 }
 
-function MemberRow({ row, heading, now, onSelect }: { row: Row; heading: number | null; now: number; onSelect: (id: string) => void }) {
+function MemberRow(props: { row: Row; heading: number | null; ended: boolean; now: number; onSelect: (id: string) => void }) {
+  const { row, heading, ended, now, onSelect } = props
   const { member, direction, seenAt, stale } = row
-  const status = !member.is_sharing ? 'Paused' : seenAt ? `Seen ${timeAgo(seenAt, now)}` : 'No location yet'
+  const status = ended
+    ? null
+    : !member.is_sharing
+      ? 'Paused'
+      : seenAt
+        ? `Seen ${timeAgo(seenAt, now)}`
+        : 'No location yet'
   const content = (
     <>
       <span className="member-name">
         <Avatar member={member} />
         <span className="member-text">
           <span>{member.display_name}</span>
-          <span className="muted small">
-            {status}
-            {direction.kind === 'away' && ` · ${cardinal(direction.bearing)}`}
-          </span>
+          {status && (
+            <span className="muted small">
+              {status}
+              {direction.kind === 'away' && ` · ${cardinal(direction.bearing)}`}
+            </span>
+          )}
         </span>
       </span>
       <DirectionCell direction={direction} heading={heading} stale={stale} />

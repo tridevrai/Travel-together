@@ -1,8 +1,10 @@
 import type { SharingStatus } from '../lib/useLocationSharing'
+import type { WakeLockStatus } from '../lib/useWakeLock'
 import { timeAgo } from '../lib/format'
 
 type Props = {
   status: SharingStatus
+  wakeLock: WakeLockStatus
   paused: boolean
   now: number
   onStart: () => void
@@ -12,7 +14,7 @@ type Props = {
 }
 
 /** My sharing state: onboarding, live status, problems, pause/resume. */
-export function SharingPanel({ status, paused, now, onStart, onPause, onResume, busy }: Props) {
+export function SharingPanel({ status, wakeLock, paused, now, onStart, onPause, onResume, busy }: Props) {
   if (paused) {
     return (
       <section className="card sharing">
@@ -56,7 +58,11 @@ export function SharingPanel({ status, paused, now, onStart, onPause, onResume, 
             </span>
           </p>
           {status.uploadError && <p className="error small">{status.uploadError}</p>}
-          <p className="muted small">Keep this page open. Sharing stops when your phone locks or you switch apps.</p>
+          <p className="muted small">
+            {wakeLock === 'active'
+              ? 'Your screen stays on while this page is open. Sharing stops if you lock your phone or switch apps.'
+              : 'Keep this page open with the screen on. Sharing stops when your phone locks or you switch apps.'}
+          </p>
           <PauseButton onPause={onPause} busy={busy} />
         </section>
       )
