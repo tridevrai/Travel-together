@@ -23,12 +23,12 @@ select is(
 );
 select throws_ok(
   $$select public.join_group('ZZZZZY', 'Guesser')$$,
-  '54000', 'too_many_attempts',
+  'PT429', 'too_many_attempts',
   'the sixth wrong code within 15 minutes is refused'
 );
 select throws_ok(
   format('select public.join_group(%L, %L)', current_setting('test.alps_code'), 'Guesser'),
-  '54000', 'too_many_attempts',
+  'PT429', 'too_many_attempts',
   'while locked out, even a valid code is refused'
 );
 reset role;
@@ -69,7 +69,7 @@ select set_config('request.headers', '{"cf-connecting-ip": "203.0.113.7"}', true
 select tests.authenticate_as('neighbour');
 select throws_ok(
   format('select public.join_group(%L, %L)', current_setting('test.alps_code'), 'Neighbour'),
-  '54000', 'too_many_attempts',
+  'PT429', 'too_many_attempts',
   'a fresh account from an IP with too many failures is refused'
 );
 select set_config('request.headers', '{"x-forwarded-for": "198.51.100.1, 10.0.0.1"}', true);

@@ -81,7 +81,8 @@ begin
          and (select count(*) from public.join_attempts a
               where a.ip = client_ip and a.attempted_at > now() - ip_window) >= ip_limit)
   then
-    raise exception 'too_many_attempts' using errcode = '54000',
+    -- PT429 makes PostgREST answer HTTP 429 instead of 500.
+    raise exception 'too_many_attempts' using errcode = 'PT429',
       hint = 'Wait a few minutes before trying another code.';
   end if;
 
