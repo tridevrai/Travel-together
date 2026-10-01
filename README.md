@@ -3,7 +3,34 @@
 A web app that lets a group travelling together see each other's live location.
 People join with a short code or a `/j/:code` link; no install needed.
 
-Status: step 1 of the v1 build — the Supabase schema, RLS policies and RPCs.
+Status: v1 steps 1–2 — the Supabase schema, RLS policies and RPCs, plus the
+web app with anonymous sign-in, create/join screens and the `/j/:code` route.
+The live map comes next.
+
+## Web app
+
+Vite + React + TypeScript, `@supabase/supabase-js`, React Router.
+
+```sh
+npm install
+cp .env.example .env.local   # fill in the Supabase URL and anon key
+npm run dev
+```
+
+| Route | Page |
+| --- | --- |
+| `/` | Join with a code, start a group, list your groups |
+| `/j/:code` | Join page a shared link opens (code is normalized, e.g. `/j/abc-234` → `/j/ABC234`) |
+| `/g/:groupId` | Group: invite code and share button, members (live via Realtime); map placeholder |
+
+Visitors are signed in anonymously on first load; the session persists in the
+browser. `src/core/` holds the framework-free group API and code helpers so
+the future React Native app can reuse them.
+
+Checks: `npm run lint`, `npm test` (Vitest), `npm run build`.
+Deploying: any static host works as long as every path falls back to
+`index.html` (`vercel.json` and `public/_redirects` handle Vercel and Netlify).
+HTTPS is required for geolocation.
 
 ## Database (`supabase/`)
 
@@ -30,7 +57,7 @@ Errors are raised with these messages: `not_authenticated`, `invalid_group_name`
 
 `join_group` is rate-limited against code guessing: after 5 unknown codes in
 15 minutes from one user, or 20 in an hour from one IP, every call fails with
-`too_many_attempts` (even with a valid code) until the window passes. Unknown
+`too_many_attempts` (HTTP 429, even with a valid code) until the window passes. Unknown
 codes return no row rather than an error, because an error would roll back the
 record of the failed attempt.
 
