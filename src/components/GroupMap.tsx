@@ -26,7 +26,11 @@ export type MapPoint = {
 type MarkerEntry = { marker: Marker; el: HTMLDivElement }
 
 function renderMarker(el: HTMLDivElement, p: MapPoint, now: number) {
-  el.className = `member-marker${p.isMe ? ' is-me' : ''}${p.stale ? ' is-stale' : ''}`
+  // Toggle our classes only: MapLibre's own (maplibregl-marker, which makes it
+  // position: absolute) live on the same element.
+  el.classList.add('member-marker')
+  el.classList.toggle('is-me', p.isMe)
+  el.classList.toggle('is-stale', p.stale)
   el.style.setProperty('--member-color', memberColor(p.userId))
   el.title = `${p.name} · ${p.isMe ? 'you' : timeAgo(p.updatedAt, now)}`
   el.replaceChildren()
@@ -39,7 +43,10 @@ function renderMarker(el: HTMLDivElement, p: MapPoint, now: number) {
   el.append(dot, label)
 }
 
-export default function GroupMap({ points, now }: { points: MapPoint[]; now: number }) {
+/** Ask the map to centre on a member; `seq` makes repeated taps on the same member count. */
+export type FocusRequest = { userId: string; seq: number }
+
+export default function GroupMap({ points, now, focus }: { points: MapPoint[]; now: number; focus: FocusRequest | null }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const markersRef = useRef(new Map<string, MarkerEntry>())
@@ -101,6 +108,15 @@ export default function GroupMap({ points, now }: { points: MapPoint[]; now: num
       fitTo(map, points, false)
     }
   }, [points, now])
+
+  // Centre on a member picked from the list.
+  useEffect(() => {
+    const map = mapRef.current
+    const target = focus && pointsRef.current.find((p) => p.userId === focus.userId)
+    if (!map || !target) return
+    containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    map.flyTo({ center: [target.lng, target.lat], zoom: Math.max(map.getZoom(), 16) })
+  }, [focus])
 
   return (
     <div className="map-wrap">

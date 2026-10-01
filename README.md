@@ -3,9 +3,10 @@
 A web app that lets a group travelling together see each other's live location.
 People join with a short code or a `/j/:code` link; no install needed.
 
-Status: v1 steps 1–3 — the Supabase schema, RLS policies and RPCs; the web app
-with anonymous sign-in, create/join screens and the `/j/:code` route; and live
-location sharing on a map. Next: distance and direction to each member.
+Status: v1 steps 1–4 — the Supabase schema, RLS policies and RPCs; the web app
+with anonymous sign-in, create/join screens and the `/j/:code` route; live
+location sharing on a map; and distance and direction to each member. Next:
+compass-relative arrows (device orientation).
 
 ## Web app
 
@@ -23,7 +24,7 @@ npm run dev
 | --- | --- |
 | `/` | Join with a code, start a group, list your groups |
 | `/j/:code` | Join page a shared link opens (code is normalized, e.g. `/j/abc-234` → `/j/ABC234`) |
-| `/g/:groupId` | Group: sharing status and pause/resume, live map, members with "last seen", invite code |
+| `/g/:groupId` | Group: sharing status and pause/resume, live map, members with distance, direction and "last seen", invite code |
 
 Visitors are signed in anonymously on first load; the session persists in the
 browser.
@@ -38,6 +39,11 @@ Location sharing (on the group page):
   when the tab comes back to the foreground. Positions older than 2 minutes are
   dimmed and labelled with how long ago they were seen.
 - Pause/resume sets `is_sharing`; pausing deletes the stored position.
+- Members list: closest first, with distance (haversine), an arrow along the
+  initial great-circle bearing and the compass point, and "Seen x ago". When
+  the distance is within both phones' GPS accuracy it says "Nearby" instead of
+  showing a meaningless arrow. Tapping someone centres the map on them. Arrows
+  are north-up until the compass step (`src/core/directions.ts`).
 - Sharing stops when the phone locks or the browser is in the background; the
   page says so. `src/core/` holds the framework-free group API and code helpers so
 the future React Native app can reuse them.

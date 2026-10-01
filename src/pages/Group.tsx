@@ -4,10 +4,10 @@ import { getGroup, isExpired, setSharing } from '../core/groups'
 import type { Group as GroupRow, GroupMember } from '../core/database.types'
 import { formatGroupCode, joinPath } from '../core/groupCode'
 import { isStale, type LocationMap } from '../core/locations'
-import type { MapPoint } from '../components/GroupMap'
+import type { FocusRequest, MapPoint } from '../components/GroupMap'
+import { MembersList } from '../components/MembersList'
 import { SharingPanel } from '../components/SharingPanel'
 import { errorMessage } from '../lib/errors'
-import { initials, memberColor, timeAgo } from '../lib/format'
 import { supabase } from '../lib/supabase'
 import { useAsync } from '../lib/useAsync'
 import { useGroupLocations } from '../lib/useGroupLocations'
@@ -72,6 +72,12 @@ function GroupView({ group }: { group: GroupRow }) {
     }
   }
 
+  const [focus, setFocus] = useState<FocusRequest | null>(null)
+  const myPosition =
+    sharing.status.kind === 'sharing'
+      ? { lat: sharing.status.fix.lat, lng: sharing.status.fix.lng, accuracyM: sharing.status.fix.accuracyM }
+      : null
+
   const points = useMemo(
     () => toMapPoints(members, locations, user.id, sharing.status, now),
     [members, locations, user.id, sharing.status, now],
@@ -104,17 +110,22 @@ function GroupView({ group }: { group: GroupRow }) {
       {toggleError && <p className="error" role="alert">{toggleError}</p>}
       {!expired && (
         <Suspense fallback={<div className="map-wrap map-loading muted">Loading map…</div>}>
-          <GroupMap points={points} now={now} />
+          <GroupMap points={points} now={now} focus={focus} />
         </Suspense>
       )}
-      <MembersCard
-        members={members}
-        state={membersState.status}
-        error={membersState.status === 'error' ? membersState.error : null}
-        locations={locations}
-        userId={user.id}
-        now={now}
-      />
+      {membersState.status === 'loading' && <p className="muted">Loading members…</p>}
+      {membersState.status === 'error' && <p className="error">{errorMessage(membersState.error)}</p>}
+      {membersState.status === 'done' && (
+        <MembersList
+          members={members}
+          locations={locations}
+          userId={user.id}
+          myPosition={myPosition}
+          heading={null}
+          now={now}
+          onSelect={(userId) => setFocus((f) => ({ userId, seq: (f?.seq ?? 0) + 1 }))}
+        />
+      )}
       {!expired && <InviteCard code={group.code} />}
     </main>
   )
@@ -142,46 +153,6 @@ function toMapPoints(
     points.push({ userId: m.user_id, name: m.display_name, lat: loc.lat, lng: loc.lng, updatedAt: loc.updated_at, stale: isStale(loc, now), isMe })
   }
   return points
-}
-
-function MembersCard(props: {
-  members: GroupMember[]
-  state: 'loading' | 'done' | 'error'
-  error: unknown
-  locations: LocationMap
-  userId: string
-  now: number
-}) {
-  const { members, state, error, locations, userId, now } = props
-  return (
-    <section className="card">
-      <h2>Members</h2>
-      {state === 'loading' && <p className="muted">Loading…</p>}
-      {state === 'error' && <p className="error">{errorMessage(error)}</p>}
-      {state === 'done' && (
-        <ul className="member-list">
-          {members.map((m) => {
-            const loc = locations.get(m.user_id)
-            const isMe = m.user_id === userId
-            return (
-              <li key={m.user_id} className={loc && isStale(loc, now) ? 'is-stale' : undefined}>
-                <span className="member-name">
-                  <span className="avatar" style={{ background: memberColor(m.user_id) }} aria-hidden="true">
-                    {initials(m.display_name)}
-                  </span>
-                  {m.display_name}
-                  {isMe && <span className="muted"> (you)</span>}
-                </span>
-                <span className="muted small">
-                  {!m.is_sharing ? 'Paused' : loc ? `Seen ${timeAgo(loc.updated_at, now)}` : 'No location yet'}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </section>
-  )
 }
 
 function InviteCard({ code }: { code: string }) {

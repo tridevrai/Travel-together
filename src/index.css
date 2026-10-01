@@ -213,3 +213,31 @@ button.secondary {
   flex: none;
 }
 .member-list li.is-stale .avatar { opacity: 0.45; }
+
+.member-row-button {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  cursor: pointer;
+}
+.member-row-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+.member-list li:has(> .member-row-button) { padding: 0; }
+.member-list li > .member-row-button { padding: 12px 0; }
+.member-text { display: flex; flex-direction: column; line-height: 1.25; }
+.direction { display: flex; align-items: center; gap: 6px; flex: none; font-variant-numeric: tabular-nums; }
+.direction-arrow { color: var(--accent); }
+.distance { font-weight: 600; min-width: 4.2em; text-align: right; }
+.nearby-dot {
+  width: 12px;
+  height: 12px;
+  margin: 8px;
+  border-radius: 50%;
+  background: #2ea043;
+  box-shadow: 0 0 0 4px color-mix(in srgb, #2ea043 25%, transparent);
+}
+.member-list li.is-stale .direction { opacity: 0.5; }
+.hint { margin: 8px 0 0; }
