@@ -1,7 +1,7 @@
 begin;
 select plan(8);
 
-select tables_are('public', array['groups', 'group_members', 'member_locations']);
+select tables_are('public', array['groups', 'group_members', 'member_locations', 'join_attempts']);
 
 select ok(relrowsecurity, format('RLS is enabled on %s', relname))
 from pg_class

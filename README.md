@@ -22,11 +22,17 @@ const { data: group } = await supabase.rpc('create_group', {
 })
 const { data: joined } = await supabase.rpc('join_group', {
   code: 'ab3-k9z', display_name: 'Bob', // case, spaces and dashes are ignored
-})
+}).maybeSingle() // null means no group has that code
 ```
 
 Errors are raised with these messages: `not_authenticated`, `invalid_group_name`,
-`invalid_display_name`, `invalid_expiry`, `group_not_found`, `group_expired`.
+`invalid_display_name`, `invalid_expiry`, `group_expired`, `too_many_attempts`.
+
+`join_group` is rate-limited against code guessing: after 5 unknown codes in
+15 minutes from one user, or 20 in an hour from one IP, every call fails with
+`too_many_attempts` (even with a valid code) until the window passes. Unknown
+codes return no row rather than an error, because an error would roll back the
+record of the failed attempt.
 
 Everything else is plain table access under RLS:
 

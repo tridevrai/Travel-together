@@ -54,9 +54,9 @@ reset role;
 
 -- join_group
 select tests.authenticate_as('bob');
-select throws_ok(
-  $$select public.join_group('ZZZZZZ', 'Bob')$$,
-  'P0002', 'group_not_found', 'join_group rejects an unknown code'
+select is_empty(
+  $$select * from public.join_group('ZZZZZZ', 'Bob')$$,
+  'join_group returns no row for an unknown code'
 );
 select throws_ok(
   format('select public.join_group(%L, %L)', current_setting('test.alps_code'), ' '),
