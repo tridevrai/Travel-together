@@ -177,5 +177,7 @@ phone, and check both appear on the map.
 
 ## Screenshots:
 
+<img width="421" height="784" alt="image" src="https://github.com/user-attachments/assets/a3114366-c8e1-49c6-bb87-89f39ed3c006" />
+
 <img width="427" height="1338" alt="image" src="https://github.com/user-attachments/assets/d0f703cc-1609-4b30-ba4e-43bc0b164b4d" />
 
