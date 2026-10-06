@@ -1,4 +1,4 @@
-# Travel Together Live travel-together-green.vercel.app
+# Travel Together [Live here] (https://travel-together-green.vercel.app)
 
 A web app that lets a group travelling together see each other's live location.
 People join with a short code or a `/j/:code` link; no install needed.
